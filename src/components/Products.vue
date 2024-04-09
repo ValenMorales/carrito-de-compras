@@ -1,6 +1,7 @@
 <template>
+  <div class="container">
   <header>
-    <h1>Restaurant</h1>
+    <h1>Agrega productos al carrito a tu antojo</h1>
     <img src="../../pizza.jpg" alt="" @click="showCar = !showCar">
   </header>
   <section>
@@ -12,7 +13,7 @@
       <button @click="addProduct(product)" class="button-item">Agregar al Carrito</button>
     </div>
   </div>
-    <div v-if="showCar" class="carrito" id="carrito">
+    <div  class="carrito" id="carrito">
             <div class="header-carrito">
                 <h2>Tu Carrito</h2>
             </div>
@@ -45,16 +46,17 @@
             </div>
         </div>
       </section>
-
-     
+    </div>
+   
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 const showCar = ref(false);
 const total = ref(0);
-const products = ref([]);
+const props = defineProps(['products']);
+const products = ref(props.products);
 const carproducts = ref([]);
 
 const deleteItem = (product) =>{
@@ -78,24 +80,18 @@ const addProduct = (product) =>{
   total.value = total.value + product.price;
 }
 
-onMounted(async () => {
-  try {
-    const response = await fetch("http://localhost:8000/products");
-    const data = await response.json();
-    products.value = data.map(product => ({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl : product.imageUrl,
-      cantity: 1
-    }));
-  } catch (error) {
-    console.error("Error fetching products:", error);
-  }
-});
+
+const data= {
+    people: products,
+    paginate: ['products']
+}
 </script>
 
 <style scoped>
+
+.container{
+  margin: auto 30px;
+}
 
 section {
   display: flex;
