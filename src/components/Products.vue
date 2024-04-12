@@ -1,19 +1,21 @@
 <template>
   <div class="container">
   <header>
-    <h1>Agrega productos al carrito a tu antojo</h1>
-    <img src="../../pizza.jpg" alt="" @click="showCar = !showCar">
+    <h2>Agrega productos a tu carrito </h2>
+    <img src="../../carrito-de-compras.png" alt="" @click="showCar = !showCar">
   </header>
   <section>
-  <div class="products">
+  <LoadingSpinner v-if="loading" />
+  <div v-else class="products">
     <div class="item" v-for="product in products" :key="product.id">
       <span class="title">{{ product.name }}</span>
       <img class="image" :src="'../../' + product.imageUrl" alt="product image"  />
+     
       <span class="price">{{ product.price }}</span>
       <button @click="addProduct(product)" class="button-item">Agregar al Carrito</button>
     </div>
   </div>
-    <div  class="carrito" id="carrito">
+    <div v-if="(showCar || carproducts.length >0)" class="carrito" id="carrito">
             <div class="header-carrito">
                 <h2>Tu Carrito</h2>
             </div>
@@ -42,22 +44,46 @@
                         {{ total }}
                     </span>
                 </div>
-                <button class="btn-pagar">Pagar <i class="fa-solid fa-bag-shopping"></i> </button>
+                <button @click="vaciarCarrito()" class="btn-pagar">Pagar  </button>
             </div>
         </div>
       </section>
     </div>
+
+    <div v-if="showEnjoy" class="modal-overlay">
+      <div class="message">
+        <h1>
+        ¡Tu compra se ha realizado con éxito!
+        </h1>
+        <h2>esperamos que lo disfrutes</h2>
+      </div>
+    </div>
    
+
 </template>
 
 <script setup>
 import { ref } from 'vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 
 const showCar = ref(false);
 const total = ref(0);
-const props = defineProps(['products']);
+const props = defineProps(['products', 'loading']);
 const products = ref(props.products);
 const carproducts = ref([]);
+const showEnjoy = ref(false);
+
+const vaciarCarrito = () =>{
+  carproducts.value = [];
+  total.value = 0;
+  products.value.forEach((product) => {
+    product.cantity = 1;
+  });
+  showEnjoy.value = true;
+  setTimeout(() => {
+    showEnjoy.value = false;
+  }, 1500);
+}
 
 const deleteItem = (product) =>{
   const index = carproducts.value.indexOf(product);
@@ -67,27 +93,59 @@ const deleteItem = (product) =>{
 
 const sumCantity = (product, id) =>{
   product.cantity = product.cantity + 1;
-  total.value = total.value + products.value[id].price;
-}
-
-const restCantity = (product, id) =>{
-  product.cantity = product.cantity - 1;
-  total.value = total.value - products.value[id].price;
-}
-
-const addProduct = (product) =>{
-  carproducts.value = [...carproducts.value, product];
   total.value = total.value + product.price;
 }
 
+const restCantity = (product, id) =>{
+  if (product.cantity > 0){
+    product.cantity = product.cantity - 1;
+  total.value = total.value - product.price;
+  if (product.cantity == 0){
+    deleteItem(product);
+  }
+  }
 
-const data= {
-    people: products,
-    paginate: ['products']
 }
+
+const addProduct = (product) => {
+
+  const index = carproducts.value.findIndex((item) => item.id === product.id);
+
+  if (index === -1) {
+    carproducts.value.push(product);
+    total.value += (product.price * product.cantity);
+  } else {
+   
+    console.log("El producto ya está en el carrito");
+  }
+}
+
+
+
 </script>
 
 <style scoped>
+
+.message{
+ background-color: white;
+ border-radius: 10px;
+ padding: 20px;
+
+ text-align: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
 
 .container{
   margin: auto 30px;

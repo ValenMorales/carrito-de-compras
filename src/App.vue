@@ -1,10 +1,12 @@
 <script setup>
 import Products from "./components/Products.vue";
 import Management from "./components/Management.vue";
+
 import { ref, onMounted } from "vue";
 const showManagement = ref(false);
 const showProducts = ref(false);
 const showHero=ref(true);
+const loading = ref(true);
 
 const products = ref([]);
 const mostrarManagement = () =>{
@@ -25,20 +27,40 @@ const mostrarProducts = () =>{
   showHero.value = false;
 }
 
-onMounted(async () => {
+const shouldLoad = ref(true);
+
+const cargarProductos = async (shouldLoad) => {
+  if (!shouldLoad) return;
+
   try {
+    loading.value = true;
     const response = await fetch("http://localhost:8000/products");
     const data = await response.json();
+    
+    // Transformar los datos de los productos
     products.value = data.map((product) => ({
       id: product.id,
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrl,
+      expiration: product.expiration,
       cantity: 1,
     }));
+
+    
   } catch (error) {
-    console.error("Error fetching products:", error);
-  }
+    console.error("Error solicitando los productos:", error);
+  } finally {
+      loading.value = false;
+    }
+  
+};
+
+
+
+onMounted(() => {
+  cargarProductos(shouldLoad);
+  shouldLoad.value = false;
 });
 </script>
 
@@ -66,15 +88,18 @@ onMounted(async () => {
       <div class="buttons">
         <button @click="mostrarManagement()">Soy un admin</button>
         <button @click="mostrarProducts()">Soy un cliente</button>
-      
       </div>
       
     </div>
     <div v-if="showProducts" class="products">
-      <Products :products="products" />
+      <Products :products="products" :loading="loading"
+       />
     </div>
 
-    <Management :products="products" v-if="showManagement"></Management>
+    <Management :products="products"
+    :loading="loading"
+    @cargarProductos="cargarProductos(true)"
+     v-if="showManagement"></Management>
     
   
 </template>
@@ -111,7 +136,7 @@ header img {
   align-items: center;
   justify-content: center;
   width: 100vw;
-  height: 92vh;
+  height: 85vh;
   padding: 20px;
   background: url(/otro-fondo.jpg);
   background-size: cover;
